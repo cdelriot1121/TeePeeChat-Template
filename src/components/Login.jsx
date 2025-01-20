@@ -1,14 +1,36 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Login({ setIsAuthenticated }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setIsAuthenticated(true)
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch('http://localhost:8000/api/login/', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('authToken', data.token); 
+        setIsAuthenticated(true);
+      } else {
+        const errorData = await response.json();
+        setErrorMessage(errorData.detail || 'Credenciales invalidas'); 
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      setErrorMessage('Algo salio mal, por favor intentalo de nuevo');
+    }
+  };
 
   return (
     <div className="flex items-center justify-center h-full">
@@ -37,6 +59,9 @@ export default function Login({ setIsAuthenticated }) {
               required
             />
           </div>
+          {errorMessage && (
+            <p className="text-sm text-red-500">{errorMessage}</p>
+          )}
           <button
             type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -52,6 +77,5 @@ export default function Login({ setIsAuthenticated }) {
         </p>
       </div>
     </div>
-  )
+  );
 }
-
